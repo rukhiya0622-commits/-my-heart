@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A little heart for you</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; width: 100%; height: 100%; background: #050407; overflow: hidden; }
+  body { display: grid; place-items: center; font-family: Arial, sans-serif; }
+  canvas { display: block; width: 100vw; height: 100vh; }
+  .hint { position: fixed; bottom: max(20px, env(safe-area-inset-bottom)); left: 0; right: 0; text-align: center; color: #d8a5bb; font-size: 12px; letter-spacing: 2px; opacity: .75; }
+</style>
+</head>
+<body>
+<canvas id="heart"></canvas>
+<div class="hint">MADE WITH LOVE ♡</div>
+<script>
+const canvas = document.getElementById('heart');
+const ctx = canvas.getContext('2d');
+let W, H, points = [], progress = 0, last = 0;
+const phrase = 'I love you  ♥  ';
+function resize() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  W = window.innerWidth; H = window.innerHeight;
+  canvas.width = Math.floor(W * dpr); canvas.height = Math.floor(H * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  makePoints();
+}
+function heart(t) {
+  return { x: 16 * Math.pow(Math.sin(t), 3), y: -(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t)) };
+}
+function makePoints() {
+  const scale = Math.min(W / 38, H / 34) * 0.88;
+  const count = Math.max(240, Math.min(650, Math.floor(W * H / 1500)));
+  points = [];
+  for (let i=0; i<count; i++) {
+    const t = (i / count) * Math.PI * 2;
+    const p = heart(t);
+    points.push({ x: W/2 + p.x*scale, y: H/2 + p.y*scale, delay: i/count });
+  }
+}
+function draw(now) {
+  const dt = Math.min(50, now - (last || now)); last = now;
+  ctx.fillStyle = 'rgba(5,4,7,0.20)'; ctx.fillRect(0,0,W,H);
+  progress = Math.min(1, progress + dt / 5200);
+  const visible = Math.floor(points.length * progress);
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for (let i=0; i<visible; i++) {
+    const p = points[i];
+    const glow = 0.65 + 0.35 * Math.sin(now/300 + i*0.17);
+    ctx.globalAlpha = glow;
+    ctx.fillStyle = i % 5 === 0 ? '#ffe0ec' : (i % 3 === 0 ? '#ff9fc6' : '#f5b6d0');
+    ctx.font = `${Math.max(7, Math.min(10, W/48))}px Arial`;
+    ctx.fillText(phrase, p.x, p.y);
+  }
+  ctx.globalAlpha = 1;
+  if (progress >= 1) {
+    const pulse = 1 + Math.sin(now/450)*0.035;
+    ctx.fillStyle = 'rgba(255,185,215,0.10)';
+    ctx.font = `bold ${Math.min(18, W/22)*pulse}px Arial`;
+    ctx.fillText('♡', W/2, H/2 + Math.min(H*0.29, 175));
+  }
+  requestAnimationFrame(draw);
+}
+window.addEventListener('resize', resize);
+resize(); requestAnimationFrame(draw);
+</script>
+</body>
+</html>
